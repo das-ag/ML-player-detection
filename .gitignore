@@ -1,3 +1,4 @@
 .DS_Store
 /trackingData
 /soccernet_data
+/experiments/__pycache__
