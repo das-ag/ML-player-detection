@@ -58,15 +58,10 @@ class ProposalModule(nn.Module):
             return conf_scores_pred, reg_offsets_pred
         
 class RegionProposalNetwork(nn.Module):
-    def __init__(self, img_size, out_size, out_channels):
+    def __init__(self, img_size, out_channels):
         super().__init__()
         
         self.img_height, self.img_width = img_size
-        self.out_h, self.out_w = out_size
-        
-        # downsampling scale factor 
-        self.width_scale_factor = self.img_width // self.out_w
-        self.height_scale_factor = self.img_height // self.out_h 
         
         # scales and ratios for anchor boxes
         self.anc_scales = [2, 4, 6]
@@ -88,13 +83,21 @@ class RegionProposalNetwork(nn.Module):
         batch_size = images.size(dim=0)
         feature_map = self.feature_extractor(images)
         
-        # generate anchors
-        anc_pts_x, anc_pts_y = gen_anc_centers(out_size=(self.out_h, self.out_w))
-        anc_base = gen_anc_base(anc_pts_x, anc_pts_y, self.anc_scales, self.anc_ratios, (self.out_h, self.out_w))
+        # Get feature map dimensions dynamically
+        _, _, hmap, wmap = feature_map.shape
+
+        # Calculate scaling factors dynamically
+        width_scale_factor = self.img_width // wmap
+        height_scale_factor = self.img_height // hmap
+        
+        # generate anchors based on feature map size
+        anc_pts_x, anc_pts_y = gen_anc_centers(out_size=(hmap, wmap)) # Use hmap, wmap
+        anc_base = gen_anc_base(anc_pts_x, anc_pts_y, self.anc_scales, self.anc_ratios, (hmap, wmap)) # Use hmap, wmap
         anc_boxes_all = anc_base.repeat(batch_size, 1, 1, 1, 1)
         
         # get positive and negative anchors amongst other things
-        gt_bboxes_proj = project_bboxes(gt_bboxes, self.width_scale_factor, self.height_scale_factor, mode='p2a')
+        # Project gt_bboxes using dynamic scale factors
+        gt_bboxes_proj = project_bboxes(gt_bboxes, width_scale_factor, height_scale_factor, mode='p2a')
         
         positive_anc_ind, negative_anc_ind, GT_conf_scores, \
         GT_offsets, GT_class_pos, positive_anc_coords, \
@@ -116,9 +119,12 @@ class RegionProposalNetwork(nn.Module):
             batch_size = images.size(dim=0)
             feature_map = self.feature_extractor(images)
 
-            # generate anchors
-            anc_pts_x, anc_pts_y = gen_anc_centers(out_size=(self.out_h, self.out_w))
-            anc_base = gen_anc_base(anc_pts_x, anc_pts_y, self.anc_scales, self.anc_ratios, (self.out_h, self.out_w))
+            # Get feature map dimensions dynamically
+            _, _, hmap, wmap = feature_map.shape
+
+            # generate anchors based on feature map size
+            anc_pts_x, anc_pts_y = gen_anc_centers(out_size=(hmap, wmap)) # Use hmap, wmap
+            anc_base = gen_anc_base(anc_pts_x, anc_pts_y, self.anc_scales, self.anc_ratios, (hmap, wmap)) # Use hmap, wmap
             anc_boxes_all = anc_base.repeat(batch_size, 1, 1, 1, 1)
             anc_boxes_flat = anc_boxes_all.reshape(batch_size, -1, 4)
 
@@ -191,9 +197,9 @@ class ClassificationModule(nn.Module):
         return cls_loss
     
 class TwoStageDetector(nn.Module):
-    def __init__(self, img_size, out_size, out_channels, n_classes, roi_size):
+    def __init__(self, img_size, out_channels, n_classes, roi_size):
         super().__init__() 
-        self.rpn = RegionProposalNetwork(img_size, out_size, out_channels)
+        self.rpn = RegionProposalNetwork(img_size, out_channels)
         self.classifier = ClassificationModule(out_channels, n_classes, roi_size)
         
     def forward(self, images, gt_bboxes, gt_classes):
