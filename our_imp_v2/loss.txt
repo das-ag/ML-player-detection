@@ -1,0 +1,9 @@
+
+STEPS
+0. use full sequence data somehow? to train? 
+1. try with baseline faster rcnn
+2. try with baseline yolo
+3. fine tune attempt
+4. results
+5. Understanding faster rcnn
+6. use yolo + sequence
