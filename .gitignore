@@ -11,3 +11,4 @@ original_imp/model.pt
 */pt
 *.pt
 /original_imp/model.pt
+experiments/rpn_model_weights.pth
