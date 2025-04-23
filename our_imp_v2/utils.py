@@ -283,15 +283,23 @@ def get_req_anchors(anc_boxes_all, gt_bboxes_all, gt_classes_all, device, pos_th
 # # -------------- Visualization utils ----------------
 
 def display_img(img_data, fig, axes):
+    # Ensure img_data is on CPU before processing
+    if isinstance(img_data, torch.Tensor):
+        img_data = img_data.cpu()
+        
     for i, img in enumerate(img_data):
-        if type(img) == torch.Tensor:
-            img = img.permute(1, 2, 0).numpy()
+        if isinstance(img, torch.Tensor):
+            # Ensure individual image tensor is on CPU
+            img = img.cpu().permute(1, 2, 0).numpy()
         axes[i].imshow(img)
     
     return fig, axes
 
 def display_bbox(bboxes, fig, ax, classes=None, in_format='xyxy', color='y', line_width=3):
-    if type(bboxes) == np.ndarray:
+    if isinstance(bboxes, torch.Tensor):
+        # Ensure bboxes are on CPU before processing
+        bboxes = bboxes.cpu()
+    if isinstance(bboxes, np.ndarray):
         bboxes = torch.from_numpy(bboxes)
     if classes:
         assert len(bboxes) == len(classes)
@@ -299,6 +307,7 @@ def display_bbox(bboxes, fig, ax, classes=None, in_format='xyxy', color='y', lin
     bboxes = ops.box_convert(bboxes, in_fmt=in_format, out_fmt='xywh')
     c = 0
     for box in bboxes:
+        # box should be a CPU tensor here, convert to numpy
         x, y, w, h = box.numpy()
         # display bounding box
         rect = patches.Rectangle((x, y), w, h, linewidth=line_width, edgecolor=color, facecolor='none')
@@ -313,14 +322,28 @@ def display_bbox(bboxes, fig, ax, classes=None, in_format='xyxy', color='y', lin
     return fig, ax
 
 def display_grid(x_points, y_points, fig, ax, special_point=None):
+    # Ensure points are on CPU before iterating
+    if isinstance(x_points, torch.Tensor):
+        x_points = x_points.cpu()
+    if isinstance(y_points, torch.Tensor):
+        y_points = y_points.cpu()
+        
     # plot grid
     for x in x_points:
         for y in y_points:
-            ax.scatter(x, y, color="w", marker='+', alpha=0.5)
+            # Ensure individual points (if they are tensors) are scalars or numpy compatible
+            x_val = x.item() if isinstance(x, torch.Tensor) else x
+            y_val = y.item() if isinstance(y, torch.Tensor) else y
+            ax.scatter(x_val, y_val, color="w", marker='+', alpha=0.5)
             
     # plot a special point we want to emphasize on the grid
     if special_point:
+        # Ensure special_point is on CPU before processing
+        if isinstance(special_point, torch.Tensor):
+            special_point = special_point.cpu()
         x, y = special_point
-        ax.scatter(x, y, color="red", marker='+')
+        x_val = x.item() if isinstance(x, torch.Tensor) else x
+        y_val = y.item() if isinstance(y, torch.Tensor) else y
+        ax.scatter(x_val, y_val, color="red", marker='+')
     # plt.show()
     return fig, ax
