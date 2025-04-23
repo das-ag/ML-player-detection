@@ -9,3 +9,5 @@
 /original_imp/__pycache__/data_loader.cpython-311.pyc
 original_imp/model.pt
 */pt
+*.pt
+/original_imp/model.pt
