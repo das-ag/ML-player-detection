@@ -76,11 +76,11 @@ def calc_gt_offsets(pos_anc_coords, gt_bbox_mapping):
 
     return torch.stack([tx_, ty_, tw_, th_], dim=-1)
 
-def gen_anc_centers(out_size):
+def gen_anc_centers(out_size, device):
     out_h, out_w = out_size
     
-    anc_pts_x = torch.arange(0, out_w) + 0.5
-    anc_pts_y = torch.arange(0, out_h) + 0.5
+    anc_pts_x = torch.arange(0, out_w, device=device) + 0.5
+    anc_pts_y = torch.arange(0, out_h, device=device) + 0.5
     
     return anc_pts_x, anc_pts_y
 
@@ -122,14 +122,14 @@ def generate_proposals(anchors, offsets):
 
     return proposals
 
-def gen_anc_base(anc_pts_x, anc_pts_y, anc_scales, anc_ratios, out_size):
+def gen_anc_base(anc_pts_x, anc_pts_y, anc_scales, anc_ratios, out_size, device):
     n_anc_boxes = len(anc_scales) * len(anc_ratios)
-    anc_base = torch.zeros(1, anc_pts_x.size(dim=0) \
-                              , anc_pts_y.size(dim=0), n_anc_boxes, 4) # shape - [1, Hmap, Wmap, n_anchor_boxes, 4]
+    anc_base = torch.zeros(1, anc_pts_y.size(dim=0) \
+                              , anc_pts_x.size(dim=0), n_anc_boxes, 4, device=device) # shape - [1, Hmap, Wmap, n_anchor_boxes, 4]
     
-    for ix, xc in enumerate(anc_pts_x):
-        for jx, yc in enumerate(anc_pts_y):
-            anc_boxes = torch.zeros((n_anc_boxes, 4))
+    for jx, yc in enumerate(anc_pts_y):
+        for ix, xc in enumerate(anc_pts_x):
+            anc_boxes = torch.zeros((n_anc_boxes, 4), device=device)
             c = 0
             for i, scale in enumerate(anc_scales):
                 for j, ratio in enumerate(anc_ratios):
@@ -141,22 +141,22 @@ def gen_anc_base(anc_pts_x, anc_pts_y, anc_scales, anc_ratios, out_size):
                     xmax = xc + w / 2
                     ymax = yc + h / 2
 
-                    anc_boxes[c, :] = torch.Tensor([xmin, ymin, xmax, ymax])
+                    anc_boxes[c, :] = torch.Tensor([xmin, ymin, xmax, ymax]).to(device)
                     c += 1
 
-            anc_base[:, ix, jx, :] = ops.clip_boxes_to_image(anc_boxes, size=out_size)
+            anc_base[:, jx, ix, :] = ops.clip_boxes_to_image(anc_boxes, size=out_size)
             
     return anc_base
 
-def get_iou_mat(batch_size, anc_boxes_all, gt_bboxes_all):
+def get_iou_mat(batch_size, anc_boxes_all, gt_bboxes_all, device):
     
     # flatten anchor boxes
     anc_boxes_flat = anc_boxes_all.reshape(batch_size, -1, 4)
     # get total anchor boxes for a single image
     tot_anc_boxes = anc_boxes_flat.size(dim=1)
     
-    # create a placeholder to compute IoUs amongst the boxes
-    ious_mat = torch.zeros((batch_size, tot_anc_boxes, gt_bboxes_all.size(dim=1)))
+    # create a placeholder to compute IoUs amongst the boxes on the specified device
+    ious_mat = torch.zeros((batch_size, tot_anc_boxes, gt_bboxes_all.size(dim=1)), device=device)
 
     # compute IoU of the anc boxes with the gt boxes for all the images
     for i in range(batch_size):
@@ -166,7 +166,7 @@ def get_iou_mat(batch_size, anc_boxes_all, gt_bboxes_all):
         
     return ious_mat
 
-def get_req_anchors(anc_boxes_all, gt_bboxes_all, gt_classes_all, pos_thresh=0.7, neg_thresh=0.2):
+def get_req_anchors(anc_boxes_all, gt_bboxes_all, gt_classes_all, device, pos_thresh=0.7, neg_thresh=0.2):
     '''
     Prepare necessary data required for training
     
@@ -203,7 +203,7 @@ def get_req_anchors(anc_boxes_all, gt_bboxes_all, gt_classes_all, pos_thresh=0.7
     
     # get the iou matrix which contains iou of every anchor box
     # against all the groundtruth bboxes in an image
-    iou_mat = get_iou_mat(B, anc_boxes_all, gt_bboxes_all)
+    iou_mat = get_iou_mat(B, anc_boxes_all, gt_bboxes_all, device=device)
     
     # for every groundtruth bbox in an image, find the iou 
     # with the anchor box which it overlaps the most
@@ -224,6 +224,8 @@ def get_req_anchors(anc_boxes_all, gt_bboxes_all, gt_classes_all, pos_thresh=0.7
     # for every anchor box, get the iou and the idx of the
     # gt bbox it overlaps with the most
     max_iou_per_anc, max_iou_per_anc_ind = iou_mat.max(dim=-1)
+    # Ensure indices are LongTensor for gather
+    max_iou_per_anc_ind = max_iou_per_anc_ind.long()
     max_iou_per_anc = max_iou_per_anc.flatten(start_dim=0, end_dim=1)
     
     # get iou scores of the +ve anchor boxes
@@ -262,7 +264,17 @@ def get_req_anchors(anc_boxes_all, gt_bboxes_all, gt_classes_all, pos_thresh=0.7
     negative_anc_mask = (max_iou_per_anc < neg_thresh)
     negative_anc_ind = torch.where(negative_anc_mask)[0]
     # sample -ve samples to match the +ve samples
-    negative_anc_ind = negative_anc_ind[torch.randint(0, negative_anc_ind.shape[0], (positive_anc_ind.shape[0],))]
+    n_pos = positive_anc_ind.shape[0]
+    n_neg = negative_anc_ind.shape[0]
+    # Ensure indices are generated correctly if n_neg > 0
+    if n_neg > 0: 
+        perm = torch.randperm(n_neg, device=device)[:n_pos] # Use randperm on device for sampling
+        negative_anc_ind = negative_anc_ind[perm]
+    else:
+        # Handle case with no negative anchors found (might happen with unusual thresholds/data)
+        # Create an empty tensor on the correct device
+        negative_anc_ind = torch.empty(0, dtype=torch.long, device=device)
+        
     negative_anc_coords = anc_boxes_flat[negative_anc_ind]
     
     return positive_anc_ind, negative_anc_ind, GT_conf_scores, GT_offsets, GT_class_pos, \

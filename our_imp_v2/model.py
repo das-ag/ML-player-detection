@@ -79,7 +79,7 @@ class RegionProposalNetwork(nn.Module):
         self.feature_extractor = FeatureExtractor()
         self.proposal_module = ProposalModule(out_channels, n_anchors=self.n_anc_boxes)
         
-    def forward(self, images, gt_bboxes, gt_classes):
+    def forward(self, images, gt_bboxes, gt_classes, device):
         batch_size = images.size(dim=0)
         feature_map = self.feature_extractor(images)
         
@@ -91,8 +91,9 @@ class RegionProposalNetwork(nn.Module):
         height_scale_factor = self.img_height // hmap
         
         # generate anchors based on feature map size
-        anc_pts_x, anc_pts_y = gen_anc_centers(out_size=(hmap, wmap)) # Use hmap, wmap
-        anc_base = gen_anc_base(anc_pts_x, anc_pts_y, self.anc_scales, self.anc_ratios, (hmap, wmap)) # Use hmap, wmap
+        anc_pts_x, anc_pts_y = gen_anc_centers(out_size=(hmap, wmap), device=device)
+        anc_base = gen_anc_base(anc_pts_x, anc_pts_y, self.anc_scales, self.anc_ratios, (hmap, wmap), device=device)
+        anc_base = anc_base.to(device)
         anc_boxes_all = anc_base.repeat(batch_size, 1, 1, 1, 1)
         
         # get positive and negative anchors amongst other things
@@ -101,7 +102,7 @@ class RegionProposalNetwork(nn.Module):
         
         positive_anc_ind, negative_anc_ind, GT_conf_scores, \
         GT_offsets, GT_class_pos, positive_anc_coords, \
-        negative_anc_coords, positive_anc_ind_sep = get_req_anchors(anc_boxes_all, gt_bboxes_proj, gt_classes)
+        negative_anc_coords, positive_anc_ind_sep = get_req_anchors(anc_boxes_all, gt_bboxes_proj, gt_classes, device=device)
         
         # pass through the proposal module
         conf_scores_pos, conf_scores_neg, offsets_pos, proposals = self.proposal_module(feature_map, positive_anc_ind, \
@@ -114,7 +115,7 @@ class RegionProposalNetwork(nn.Module):
         
         return total_rpn_loss, feature_map, proposals, positive_anc_ind_sep, GT_class_pos
     
-    def inference(self, images, conf_thresh=0.5, nms_thresh=0.7):
+    def inference(self, images, device, conf_thresh=0.5, nms_thresh=0.7):
         with torch.no_grad():
             batch_size = images.size(dim=0)
             feature_map = self.feature_extractor(images)
@@ -123,8 +124,9 @@ class RegionProposalNetwork(nn.Module):
             _, _, hmap, wmap = feature_map.shape
 
             # generate anchors based on feature map size
-            anc_pts_x, anc_pts_y = gen_anc_centers(out_size=(hmap, wmap)) # Use hmap, wmap
-            anc_base = gen_anc_base(anc_pts_x, anc_pts_y, self.anc_scales, self.anc_ratios, (hmap, wmap)) # Use hmap, wmap
+            anc_pts_x, anc_pts_y = gen_anc_centers(out_size=(hmap, wmap), device=device)
+            anc_base = gen_anc_base(anc_pts_x, anc_pts_y, self.anc_scales, self.anc_ratios, (hmap, wmap), device=device)
+            anc_base = anc_base.to(device)
             anc_boxes_all = anc_base.repeat(batch_size, 1, 1, 1, 1)
             anc_boxes_flat = anc_boxes_all.reshape(batch_size, -1, 4)
 
@@ -202,9 +204,9 @@ class TwoStageDetector(nn.Module):
         self.rpn = RegionProposalNetwork(img_size, out_channels)
         self.classifier = ClassificationModule(out_channels, n_classes, roi_size)
         
-    def forward(self, images, gt_bboxes, gt_classes):
+    def forward(self, images, gt_bboxes, gt_classes, device):
         total_rpn_loss, feature_map, proposals, \
-        positive_anc_ind_sep, GT_class_pos = self.rpn(images, gt_bboxes, gt_classes)
+        positive_anc_ind_sep, GT_class_pos = self.rpn(images, gt_bboxes, gt_classes, device=device)
         
         # get separate proposals for each sample
         pos_proposals_list = []
@@ -219,9 +221,9 @@ class TwoStageDetector(nn.Module):
         
         return total_loss
     
-    def inference(self, images, conf_thresh=0.5, nms_thresh=0.7):
+    def inference(self, images, device, conf_thresh=0.5, nms_thresh=0.7):
         batch_size = images.size(dim=0)
-        proposals_final, conf_scores_final, feature_map = self.rpn.inference(images, conf_thresh, nms_thresh)
+        proposals_final, conf_scores_final, feature_map = self.rpn.inference(images, device, conf_thresh, nms_thresh)
         cls_scores = self.classifier(feature_map, proposals_final)
         
         # convert scores into probability
@@ -242,8 +244,9 @@ class TwoStageDetector(nn.Module):
 # ------------------- Loss Utils ----------------------
 
 def calc_cls_loss(conf_scores_pos, conf_scores_neg, batch_size):
-    target_pos = torch.ones_like(conf_scores_pos)
-    target_neg = torch.zeros_like(conf_scores_neg)
+    device = conf_scores_pos.device
+    target_pos = torch.ones_like(conf_scores_pos, device=device)
+    target_neg = torch.zeros_like(conf_scores_neg, device=device)
     
     target = torch.cat((target_pos, target_neg))
     inputs = torch.cat((conf_scores_pos, conf_scores_neg))
