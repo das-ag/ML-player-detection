@@ -160,9 +160,15 @@ def get_iou_mat(batch_size, anc_boxes_all, gt_bboxes_all, device):
 
     # compute IoU of the anc boxes with the gt boxes for all the images
     for i in range(batch_size):
-        gt_bboxes = gt_bboxes_all[i]
-        anc_boxes = anc_boxes_flat[i]
-        ious_mat[i, :] = ops.box_iou(anc_boxes, gt_bboxes)
+        gt_bboxes = gt_bboxes_all[i] # Sliced tensor
+        anc_boxes = anc_boxes_flat[i] # Sliced tensor
+        
+        # Explicitly ensure both tensors are on the target device before IoU calculation
+        gt_bboxes_dev = gt_bboxes.to(device)
+        anc_boxes_dev = anc_boxes.to(device)
+        
+        # Calculate IoU using tensors guaranteed to be on the correct device
+        ious_mat[i, :] = ops.box_iou(anc_boxes_dev, gt_bboxes_dev)
         
     return ious_mat
 
@@ -235,17 +241,23 @@ def get_req_anchors(anc_boxes_all, gt_bboxes_all, gt_classes_all, device, pos_th
     
     # expand gt classes to map against every anchor box
     gt_classes_expand = gt_classes_all.view(B, 1, N).expand(B, tot_anc_boxes, N)
+    # Ensure gt_classes_expand is on the correct device before gather
+    gt_classes_expand = gt_classes_expand.to(device)
     # for every anchor box, consider only the class of the gt bbox it overlaps with the most
+    # Ensure inputs to gather are on the same device 
     GT_class = torch.gather(gt_classes_expand, -1, max_iou_per_anc_ind.unsqueeze(-1)).squeeze(-1)
     # combine all the batches and get the mapped classes of the +ve anchor boxes
     GT_class = GT_class.flatten(start_dim=0, end_dim=1)
-    GT_class_pos = GT_class[positive_anc_ind]
+    GT_class_pos = GT_class[positive_anc_ind] # GT_class_pos will be on device
     
     # get gt bbox coordinates of the +ve anchor boxes
     
     # expand all the gt bboxes to map against every anchor box
     gt_bboxes_expand = gt_bboxes_all.view(B, 1, N, 4).expand(B, tot_anc_boxes, N, 4)
+    # Ensure gt_bboxes_expand is on the correct device before gather
+    gt_bboxes_expand = gt_bboxes_expand.to(device)
     # for every anchor box, consider only the coordinates of the gt bbox it overlaps with the most
+    # Ensure indices are also on the correct device (max_iou_per_anc_ind should be)
     GT_bboxes = torch.gather(gt_bboxes_expand, -2, max_iou_per_anc_ind.reshape(B, tot_anc_boxes, 1, 1).repeat(1, 1, 1, 4))
     # combine all the batches and get the mapped gt bbox coordinates of the +ve anchor boxes
     GT_bboxes = GT_bboxes.flatten(start_dim=0, end_dim=2)
