@@ -2,3 +2,8 @@
 /trackingData
 /soccernet_data
 /experiments/__pycache__
+/our_imp_v2/__pycache__
+/original_imp/__pycache__/utils.cpython-311.pyc
+/original_imp/__pycache__/model.cpython-311.pyc
+/original_imp/__pycache__/featureExtractor.cpython-311.pyc
+/original_imp/__pycache__/data_loader.cpython-311.pyc
