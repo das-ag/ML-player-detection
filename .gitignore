@@ -14,6 +14,7 @@ original_imp/model.pt
 *.pt
 /original_imp/model.pt
 experiments/rpn_model_weights.pth
+<<<<<<< HEAD
 our_imp_v3/__pycache__/data_loader.cpython-310.pyc
 our_imp_v3/__pycache__/featureExtractor.cpython-310.pyc
 our_imp_v3/__pycache__/model.cpython-310.pyc
@@ -26,3 +27,7 @@ our_imp_v3/__pycache__/featureExtractor.cpython-310.pyc
 our_imp_v3/__pycache__/model.cpython-310.pyc
 our_imp_v3/__pycache__/utils.cpython-310.pyc
 our_imp_v3/__pycache__/data_loader.cpython-310.pyc
+=======
+sequences/datasets
+sequences/runs
+>>>>>>> 0d1151d (yolo experiments)
