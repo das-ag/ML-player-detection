@@ -111,7 +111,7 @@ def training_loop(model, learning_rate, train_dataloader, n_epochs, device,
     return loss_list
 
 def resume_training(model, train_dataloader, device, checkpoint_path, 
-                   n_epochs=1000, save_checkpoint_freq=20, checkpoint_dir='checkpoints'):
+                   n_epochs=1000, save_checkpoint_freq=10, checkpoint_dir='checkpoints'):
     """
     Resume training from a checkpoint
     
@@ -130,13 +130,26 @@ def resume_training(model, train_dataloader, device, checkpoint_path,
     # Create checkpoint directory if it doesn't exist
     os.makedirs(checkpoint_dir, exist_ok=True)
     
+    # Move model to device FIRST
+    model.to(device)
+    
     # Load checkpoint
     checkpoint = torch.load(checkpoint_path, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
     
     # Create optimizer (required even if loading from checkpoint)
     optimizer = optim.Adam(model.parameters())
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    
+    # Load optimizer state and make sure it's on the right device
+    optimizer_state = checkpoint['optimizer_state_dict']
+    
+    # Fix optimizer state device
+    for state in optimizer_state['state'].values():
+        for k, v in state.items():
+            if isinstance(v, torch.Tensor):
+                state[k] = v.to(device)
+    
+    optimizer.load_state_dict(optimizer_state)
     
     # Create scheduler and load state
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
@@ -152,7 +165,6 @@ def resume_training(model, train_dataloader, device, checkpoint_path,
     
     scaler = GradScaler(device=device.type)
     
-    model.to(device)
     model.train()
     loss_list = []
     
