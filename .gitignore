@@ -126,3 +126,5 @@ sequences/runs
 /sequences/runs/detect/train2/train_batch92.jpg
 /sequences/runs/detect/train2/val_batch0_labels.jpg
 /sequences/runs/detect/train2/val_batch0_pred.jpg
+/yolo/football-players-detection-1
+/yolo/runs
