@@ -2,8 +2,115 @@
 STEPS
 0. use full sequence data somehow? to train? 
 1. try with baseline faster rcnn
+	a. score_thresh = 8.0, 5.0 / iou_thresh = 0.5, 0.5
 2. try with baseline yolo
+	a. score_thresh = 8.0, 5.0 / iou_thresh = 0.5, 0.5
+
+
+Focus fine tune on simply improving on best thresholds seen by baseline tests:
+^^^LINKED TO QUESTION
+
+
 3. fine tune attempt
+	a. train dataset to train and test to eval on test
+	
+	train with 10 frames per sequence, 50 epochs
+	train with 20 frames per sequence, 25 epochs
+	
+	QUESTION!!!
+	***b. should we eval both models on [8, 5] [5, 5], or just 
+		don best one for each - so we can focus on 
+			different approaches to training we tried
+	
+	
+	
+	ONLY FOR FRCNN: (explore after AD has eval results
+	 	(with best thresthold setting) for yolo	exactly
+	 			 mirroring frcnn 2 trainings)	
+	... could we add this extra set of results I kinda organized
+	For each finetuning model:
+	Train on: 20 frames per sequence, 25 epochs
+	Train on: 10 frames per sequence, 50 epochs 
+	
+	
+	TALK TO AD:
+	
+	I already did 10f, 50e vs 20f, 25e
+	
+(WANT TO TRY BUT probably no time unless we completely scrap something else):
+
+	20f, 100(or 50 if no time)e because it was better than 10f 50e
+	30f 25e to see if it trended to be better than 20f
+	
+	IF WE DO THIS: completely scrap other thing + only one threshold set?
+
+	Pros: 	we can discuss the tradeoffs of training more epochs with less 
+			frames per sequence, and less epochs with more frames 
+			per sequence
+		
+		try out cool trend we see with 20 frames learning well
+			 
+	Cons:	makes the report that much more image filled with a bit less
+		 wordage (Pro or Con?)
+		 
+		 you have to do all these same trainings for yolo
+
+	
+	TODO: yolo - train
+		train with 10 frames per sequence, 50 epochs
+		train with 20 frames per sequence, 25 epochs
+		
+		extra stuff? 
+	
+
+
 4. results
+	Talk about results of fine tuning overall (not long)
 5. Understanding faster rcnn
-6. use yolo + sequence
+	our experimentation
+6. use yolo + sequence (I DONT EVEN THINK WE NEED THIS) 
+
+
+
+
+
+
+
+
+get results of training with this 50 random frames from sequeneces and training
+
+	get graph with 10 epochs
+
+	50f takes ~4:30 per epoch
+
+
+
+evaluate with ONLY TEST SET: DONE
+
+
+
+50f with 10 epochs:
+
+Number of images to sample: 10
+Score threshold: 0.8
+IOU threshold: 0.5
+Processing sequences...
+Sequences: 100%|██████████| 49/49 [02:11<00:00,  2.68s/it]
+Number of sampled frames to output: 10
+Total frames processed: 1470
+Final metrics:
+
+Average Detection Accuracy over 1470 frames: 96.50%
+Precision: 0.959, Recall: 0.923 frames: 96.50%
+
+
+
+
+10f with 50 epochs
+
+
+
+
+
+
+

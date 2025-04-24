@@ -1,4 +1,6 @@
 .DS_Store
+/fasterRCNN/weights/*
+/fasterRCNN/extra
 /trackingData
 /soccernet_data
 /experiments/__pycache__
