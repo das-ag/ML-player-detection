@@ -10,7 +10,7 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Player detection model training script')
     parser.add_argument('--epochs', type=int, default=1000, help='Number of epochs to train')
-    parser.add_argument('--batch-size', type=int, default=32, help='Batch size for training')
+    parser.add_argument('--batch-size', type=int, default=16, help='Batch size for training')
     parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
     parser.add_argument('--checkpoint-freq', type=int, default=20, help='Save checkpoint every N epochs')
     parser.add_argument('--resume', type=str, default=None, help='Path to checkpoint to resume from')
@@ -57,6 +57,7 @@ def main():
         # Initialize feature extractor to examine output dimensions
         from featureExtractor import InceptionFeatureExtractor
         backbone = InceptionFeatureExtractor()
+        backbone.to(device)  # Move backbone to the same device first
         batch = next(iter(train_dataloader))
         img_batch = batch[0].to(device)
         features = backbone(img_batch)
@@ -89,6 +90,7 @@ def main():
         # Initialize feature extractor to examine output dimensions
         from featureExtractor import InceptionFeatureExtractor
         backbone = InceptionFeatureExtractor()
+        backbone.to(device)  # Move backbone to the same device first
         batch = next(iter(train_dataloader))
         img_batch = batch[0].to(device)
         features = backbone(img_batch)
