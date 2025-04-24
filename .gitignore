@@ -12,3 +12,5 @@ original_imp/model.pt
 *.pt
 /original_imp/model.pt
 experiments/rpn_model_weights.pth
+sequences/datasets
+sequences/runs
