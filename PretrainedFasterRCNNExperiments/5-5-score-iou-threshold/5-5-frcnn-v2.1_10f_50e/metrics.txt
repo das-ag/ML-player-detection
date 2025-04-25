@@ -1,0 +1,6 @@
+Score Threshold: 0.5
+IOU Threshold: 0.5
+Total frames processed: 1470
+Average Detection Accuracy: 93.09%
+Precision: 0.918, Recall: 0.918
+Total TP: 21756, Total FP: 1944, Total FN: 1940
