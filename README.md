@@ -6,6 +6,8 @@
 - Contains baseline benchmarks with various score thresholds
 - Contains finetuned model benchmarks with various score thresholds
 - Contains sample images from multiple runs
+  
+
 ![alt text](pretrainedFasterRCNNExperiments/baseline_imgs/8-5/SNMOT-119_000253.jpg)![alt text](pretrainedFasterRCNNExperiments/baseline_imgs/8-5/SNMOT-067_000571.jpg)
 
 ## pretrainedYOLOExperiments
@@ -26,5 +28,8 @@
 [text](blob:vscode-webview%3A//16p3uibtapbug296usup8gldi8j7atrvgceoqpkfsi87seoabf02/c01c17fb-7c8f-4f03-b8ae-8cf879dacd8d)
 ## customFasterRCNN
 - Adapting: https://medium.com/data-science/understanding-and-implementing-faster-r-cnn-a-step-by-step-guide-11acfff216b0 with far more challenging dataset, updated backbone, gpu acceleration, checkpoints, lr schedulers etc on Discovery.
+- Example output at end of training_only.ipynb
+- Incldues long run training for discovery with checkpoints, lr scheduler
+
 
 [text](blob:vscode-webview%3A//16p3uibtapbug296usup8gldi8j7atrvgceoqpkfsi87seoabf02/c3dc527a-113f-4c4a-b312-7af979eae4c4)[text](blob:vscode-webview%3A//16p3uibtapbug296usup8gldi8j7atrvgceoqpkfsi87seoabf02/4be3561c-95d1-478c-8101-8eee4a478c14)[text](blob:vscode-webview%3A//16p3uibtapbug296usup8gldi8j7atrvgceoqpkfsi87seoabf02/579737a9-0312-42c9-a022-6032ac4bb233)
