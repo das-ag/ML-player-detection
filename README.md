@@ -17,8 +17,8 @@
 - condense_yolo_soccernet -- eliminates 20 all but 20 frames from yolo format data for quicker benchmarking
 - Contains sample images from multiple runs
 - `FinetunedYOLORun` contains figures from benchmarking
-![alt text](pretrainedYOLOExperiments/FinetunedYOLORun/results.png)
-![alt text](pretrainedYOLOExperiments/FinetunedYOLORun/train_batch2.jpg)
+![alt text](PretrainedYOLOExperiments/FinetunedYOLORun/results.png)
+![alt text](PretrainedYOLOExperiments/FinetunedYOLORun/train_batch2.jpg)
 
 ## fasterRCNNArchitectureExperiments
 - exp1: Experiments with backbones, dissecting Inception V3 feature extractor
