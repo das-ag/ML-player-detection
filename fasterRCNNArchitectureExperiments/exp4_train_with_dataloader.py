@@ -5,10 +5,11 @@ import torch.optim as optim
 import torchvision.transforms as T
 from exp3_data_loader import get_dataloader
 
-# 1) Setup device
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 2) Hyperparameters and data paths
+
 sequence_dir = os.path.join("..", "soccernet_data", "tracking", "train", "SNMOT-060")
 batch_size = 4
 num_workers = 4
@@ -32,9 +33,9 @@ loader = get_dataloader(
     transforms=y_transform
 )
 
-# 5) Prepare the RPN (assumes `rpn` is already defined in the environment)
+rpn = region
 rpn.to(device)
-# Freeze backbone parameters
+
 for p in rpn.feature_extractor.parameters():
     p.requires_grad = False
 
