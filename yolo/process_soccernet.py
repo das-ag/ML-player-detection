@@ -148,7 +148,7 @@ def convert_labels_to_yolo(seq_name, gameinfo_path, original_gt_path, new_labels
         grouped = gt_df.groupby('frame')
 
         for frame_id, group in grouped:
-            frame_id_str = f"{frame_id:04d}"
+            frame_id_str = f"{frame_id}"
             yolo_filename = f"{seq_name}_{frame_id_str}.txt"
             yolo_filepath = os.path.join(new_labels_dir, yolo_filename)
             frame_annotations = []
