@@ -14,3 +14,8 @@ original_imp/model.pt
 *.pt
 /original_imp/model.pt
 experiments/rpn_model_weights.pth
+/soccernet_data_yolo
+/yolo/football-players-detection-1
+/yolo/soccernet_data_yolo
+/yolo/soccernet_data_yolo_condensed
+/yolo/runs
