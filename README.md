@@ -1,6 +1,6 @@
 # Project Structure
 
-## *First* download_data.py -- Gives us soccernet_data
+## *First* `python download_data.py` -- Gives us soccernet_data
 
 ## pretrainedFasterRCNNExperiments
 - Contains baseline benchmarks with various score thresholds
