@@ -16,5 +16,11 @@
 - `FinetunedYOLORun` contains figures from benchmarking
 
 ## fasterRCNNArchitectureExperiments
+- exp1: Experiments with backbones, dissecting Inception V3 feature extractor
+- exp2: Feature size effects on anchor points for bounding bounding boxes
+- exp3: Ground truth manipulation
+- exp4 folder: Investigating how scale and ratio of bounding boxes result in higher or lower identifications, first attempts with region proposal network
 
 ## customFasterRCNN
+- Adapting: https://medium.com/data-science/understanding-and-implementing-faster-r-cnn-a-step-by-step-guide-11acfff216b0 with far more challenging dataset, updated backbone, gpu acceleration, checkpoints, lr schedulers etc on Discovery.
+
